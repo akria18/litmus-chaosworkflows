@@ -75,6 +75,7 @@ pipeline {
                     sh '''
                     echo "unleash the chaos => CPU hogging"
                     ./kubectl apply -f  litmus-chaosworkflows/workflows/
+                    ./scripts/cleanup.sh
                     '''
                     script {
                         chaosResults  = readFile('workflows/report.txt').trim()
