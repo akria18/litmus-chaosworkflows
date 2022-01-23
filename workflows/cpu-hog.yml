@@ -1,7 +1,7 @@
 kind: Workflow
 apiVersion: argoproj.io/v1alpha1
 metadata:
-  name: custom-chaos-workflow-1642942577
+  name: custom-chaos-workflow
   namespace: litmus
   creationTimestamp: null
   labels:
@@ -210,7 +210,7 @@ spec:
                   labels:
                     instance_id: 83b09708-c22e-4014-a66d-72a72e37046a
                     context: pod-cpu-hog_litmus
-                    workflow_name: custom-chaos-workflow-1642942577
+                    workflow_name: custom-chaos-workflow
                 spec:
                   engineState: active
                   appinfo:
