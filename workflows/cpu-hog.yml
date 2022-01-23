@@ -1,30 +1,28 @@
-apiVersion: argoproj.io/v1alpha1
 kind: Workflow
+apiVersion: argoproj.io/v1alpha1
 metadata:
   name: custom-chaos-workflow-1642942577
   namespace: litmus
+  creationTimestamp: null
   labels:
     subject: custom-chaos-workflow_litmus
-    workflows.argoproj.io/controller-instanceid: e29b17e7-974a-4c24-abc5-7334ea73bd31
+    workflows.argoproj.io/controller-instanceid: 565a14bc-06ec-4afa-a145-9dd7975a1ab7
 spec:
-  arguments:
-    parameters:
-      - name: adminModeNamespace
-        value: litmus
-  entrypoint: custom-chaos
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-  serviceAccountName: argo-chaos
   templates:
     - name: custom-chaos
+      inputs: {}
+      outputs: {}
+      metadata: {}
       steps:
         - - name: install-chaos-experiments
             template: install-chaos-experiments
+            arguments: {}
         - - name: pod-cpu-hog
             template: pod-cpu-hog
+            arguments: {}
         - - name: revert-chaos
             template: revert-chaos
+            arguments: {}
     - name: install-chaos-experiments
       inputs:
         artifacts:
@@ -185,14 +183,18 @@ spec:
                       app.kubernetes.io/component: experiment-job
                       app.kubernetes.io/runtime-api-usage: "true"
                       app.kubernetes.io/version: 2.4.0
+      outputs: {}
+      metadata: {}
       container:
-        args:
-          - kubectl apply -f /tmp/pod-cpu-hog.yaml -n
-            {{workflow.parameters.adminModeNamespace}} |  sleep 30
+        name: ""
+        image: litmuschaos/k8s:latest
         command:
           - sh
           - -c
-        image: litmuschaos/k8s:latest
+        args:
+          - kubectl apply -f /tmp/pod-cpu-hog.yaml -n
+            {{workflow.parameters.adminModeNamespace}} |  sleep 30
+        resources: {}
     - name: pod-cpu-hog
       inputs:
         artifacts:
@@ -208,6 +210,7 @@ spec:
                   labels:
                     instance_id: 83b09708-c22e-4014-a66d-72a72e37046a
                     context: pod-cpu-hog_litmus
+                    workflow_name: custom-chaos-workflow-1642942577
                 spec:
                   engineState: active
                   appinfo:
@@ -232,13 +235,23 @@ spec:
                               value: /var/run/docker.sock
                         probe: []
                   annotationCheck: "false"
+      outputs: {}
+      metadata:
+        labels:
+          weight: "10"
       container:
+        name: ""
+        image: litmuschaos/litmus-checker:latest
         args:
           - -file=/tmp/chaosengine-pod-cpu-hog.yaml
           - -saveName=/tmp/engine-name
-        image: litmuschaos/litmus-checker:latest
+        resources: {}
     - name: revert-chaos
+      inputs: {}
+      outputs: {}
+      metadata: {}
       container:
+        name: ""
         image: litmuschaos/k8s:latest
         command:
           - sh
@@ -247,6 +260,19 @@ spec:
           - "kubectl delete chaosengine -l 'instance_id in
             (83b09708-c22e-4014-a66d-72a72e37046a, )' -n
             {{workflow.parameters.adminModeNamespace}} "
+        resources: {}
+  entrypoint: custom-chaos
+  arguments:
+    parameters:
+      - name: adminModeNamespace
+        value: litmus
+  serviceAccountName: argo-chaos
   podGC:
     strategy: OnWorkflowCompletion
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+status:
+  ? startedAt
+  ? finishedAt
 
