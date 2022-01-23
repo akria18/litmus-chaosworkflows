@@ -77,9 +77,10 @@ pipeline {
                     ./kubectl apply -f  litmus-chaosworkflows/workflows/
                     ./scripts/cleanup.sh
                     '''
-                    script {
-                        chaosResults  = readFile('workflows/report.txt').trim()
-                    }
+                    
+                }
+                script {
+                    chaosResults  = readFile('report.txt').trim()
                 }
                 
             }
