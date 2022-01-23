@@ -73,6 +73,7 @@ pipeline {
             steps {
                 container('chaos-builder') {
                     sh '''
+                    echo "unleash the chaos => CPU hogging"
                     ./kubectl apply -f  litmus-chaosworkflows/workflows/
                     '''
                 }
