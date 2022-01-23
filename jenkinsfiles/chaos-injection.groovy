@@ -76,6 +76,9 @@ pipeline {
                     echo "unleash the chaos => CPU hogging"
                     ./kubectl apply -f  litmus-chaosworkflows/workflows/
                     '''
+                    script {
+                        chaosResults  = readFile('workflows/report.txt').trim()
+                    }
                 }
                 
             }
@@ -101,6 +104,11 @@ pipeline {
                             [
                                 title: "Trigger",
                                 value: "${triggerDesc}",
+                                short: true
+                            ],
+                            [
+                                title: "Chaos Results",
+                                value: "${chaosResults}",
                                 short: true
                             ],
                             [
