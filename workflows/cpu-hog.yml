@@ -216,7 +216,7 @@ spec:
                   engineState: active
                   appinfo:
                     appns: app
-                    applabel: app=nginx
+                    applabel: app=chaoscarnival-demo
                     appkind: deployment
                   chaosServiceAccount: litmus-admin
                   experiments:

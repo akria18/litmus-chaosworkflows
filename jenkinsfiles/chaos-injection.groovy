@@ -12,8 +12,9 @@ def decodedJobName = env.JOB_NAME.replaceAll('%2F', '/')
 pipeline {
     environment {
 		DOCKERHUB_CREDENTIALS=credentials('chaoscarnival22')
-        DOCKER_DEV_PATH = "chaoscarnival22/dev/"
-        DOCKER_PROD_PATH = "chaoscarnival22/prod/"
+        DOCKER_DEV_PATH = "chaoscarnival22/dev"
+        DOCKER_PROD_PATH = "chaoscarnival22/prod"
+        DOCKER_IMAGE_PREFIX = "chaoscarnival-demo"
 	}
     agent {
         kubernetes {
@@ -46,13 +47,14 @@ pipeline {
                 container('chaos-builder') {
                     script {
                             DATE_VERSION = new Date().format('yyyyMMdd')
-                            VERSION_SUFFIX = ''
+                            VERSION_SUFFIX = 'demo'
                             if(BRANCH_NAME != 'master') {
                                 VERSION_SUFFIX="-${BRANCH_NAME}"
                             }
                             VERSION_SUFFIX = "${VERSION_SUFFIX}-BUILD-${BUILD_NUMBER}"
                             env.DOCKER_IMAGE_TAG = "${VERSION_SUFFIX}"
-                            env.APP_DOCKER_IMAGE = "${DOCKER_DEV_PATH}chaoscanrival-demo:${DOCKER_IMAGE_TAG}"                       
+                            env.APP_DOCKER_IMAGE_DEV = "${DOCKER_DEV_PATH}-chaoscarnival-demo:${DOCKER_IMAGE_TAG}"
+                            env.APP_DOCKER_IMAGE_PROD = "${DOCKER_PROD_PATH}-chaoscarnival-demo:${DOCKER_IMAGE_TAG}"         
                             triggerDesc = currentBuild.getBuildCauses().get(0).shortDescription
                             slackSend (
                                 channel: "${slackChannel}",
@@ -71,13 +73,23 @@ pipeline {
                                 ]]
                             )
                         }
-                    sh '''
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                    kubectl -napp set deployment/chaoscarnival-demo chaoscarnival-demo=chaoscarnival22/chaoscarnival-demo:1.0.0
-                    
-                    '''
                 }
                 
+            }
+        }
+        stage('Build image and push it to dev') {
+            steps {
+                container('chaos-builder') {
+                    sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    cd app 
+                    docker build \
+                            --network=host \
+                            --tag ${APP_DOCKER_IMAGE_DEV} .
+                    docker push ${APP_DOCKER_IMAGE_DEV}
+                    '''
+                    
+                }  
             }
         }
         stage('QA testing') {
@@ -94,6 +106,10 @@ pipeline {
             steps {
                 container('chaos-builder') {
                     sh '''
+                    echo "update the app with new image"
+                    kubectl -napp  set image  deployment/${DOCKER_IMAGE_PREFIX} ${DOCKER_IMAGE_PREFIX}=${APP_DOCKER_IMAGE_DEV}
+                    kubectl wait --for=condition=available --timeout=600s deployment/${DOCKER_IMAGE_PREFIX} -n app
+
                     echo "unleash the chaos => CPU hogging"
                     ./kubectl apply -f  litmus-chaosworkflows/workflows/
                     ./scripts/cleanup.sh
@@ -104,6 +120,18 @@ pipeline {
                     chaosResults  = readFile('report.txt').trim()
                 }
                 
+            }
+        }
+        stage('Promote image') {
+            steps {
+                container('chaos-builder') {
+                    sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker tag ${APP_DOCKER_IMAGE_DEV} ${APP_DOCKER_IMAGE_PROD} 
+                    docker push ${APP_DOCKER_IMAGE_PROD} 
+                    '''
+                    
+                }  
             }
         }
 
