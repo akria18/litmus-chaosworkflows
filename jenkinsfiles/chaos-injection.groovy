@@ -111,7 +111,7 @@ pipeline {
                     kubectl wait --for=condition=available --timeout=600s deployment/${DOCKER_IMAGE_PREFIX} -n app
 
                     echo "unleash the chaos => CPU hogging"
-                    ./kubectl apply -f  litmus-chaosworkflows/workflows/
+                    kubectl apply -f  litmus-chaosworkflows/workflows/
                     ./scripts/cleanup.sh
                     '''
                     
