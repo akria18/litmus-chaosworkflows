@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaoscarnival-demo
+  namespace: app
+spec:
+  selector:
+    matchLabels:
+      app: chaoscarnival-demo
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: chaoscarnival-demo
+    spec:
+      imagePullSecrets:
+      - name: registrypullsecret
+      containers:
+      - name: chaoscarnival-demo
+        image: chaoscarnival22/chaoscarnival-demo:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaoscarnival-demo
+  namespace: app
+  labels:
+    app: chaoscarnival-demo
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: chaoscarnival-demo

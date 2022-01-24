@@ -10,6 +10,11 @@ def slackChannel = 'sre-and-chaos-engineering'
 def decodedJobName = env.JOB_NAME.replaceAll('%2F', '/')
 
 pipeline {
+    environment {
+		DOCKERHUB_CREDENTIALS=credentials('chaoscarnival22')
+        DOCKER_DEV_PATH = "chaoscarnival22/dev/"
+        DOCKER_PROD_PATH = "chaoscarnival22/prod/"
+	}
     agent {
         kubernetes {
             label 'kube-agent'
@@ -40,6 +45,14 @@ pipeline {
             steps {
                 container('chaos-builder') {
                     script {
+                            DATE_VERSION = new Date().format('yyyyMMdd')
+                            VERSION_SUFFIX = ''
+                            if(BRANCH_NAME != 'master') {
+                                VERSION_SUFFIX="-${BRANCH_NAME}"
+                            }
+                            VERSION_SUFFIX = "${VERSION_SUFFIX}-BUILD-${BUILD_NUMBER}"
+                            env.DOCKER_IMAGE_TAG = "${VERSION_SUFFIX}"
+                            env.APP_DOCKER_IMAGE = "${DOCKER_DEV_PATH}chaoscanrival-demo:${DOCKER_IMAGE_TAG}"                       
                             triggerDesc = currentBuild.getBuildCauses().get(0).shortDescription
                             slackSend (
                                 channel: "${slackChannel}",
@@ -59,14 +72,22 @@ pipeline {
                             )
                         }
                     sh '''
-                    yum install curl -y
-                    curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl" 
-                    chmod u+x ./kubectl
-                    git clone https://github.com/akria18/litmus-chaosworkflows.git
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    kubectl -napp set deployment/chaoscarnival-demo chaoscarnival-demo=chaoscarnival22/chaoscarnival-demo:1.0.0
                     
                     '''
                 }
                 
+            }
+        }
+        stage('QA testing') {
+            steps {
+                container('chaos-builder') {
+                    sh '''
+                    echo "QA testing"
+                    '''
+                    
+                }  
             }
         }
         stage('inject chaos') {
@@ -100,7 +121,7 @@ pipeline {
                         fields: [
                             [
                                 title: "Tag",
-                                value: "test",
+                                value: "ChaosEngineering",
                                 short: true
                             ],
                             [
