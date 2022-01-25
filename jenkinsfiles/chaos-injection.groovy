@@ -8,7 +8,8 @@ def colors = [
 
 def slackChannel = 'sre-and-chaos-engineering'
 def decodedJobName = env.JOB_NAME.replaceAll('%2F', '/')
-
+def chaosResults = ""
+def chaosResult = ""
 pipeline {
     environment {
 		DOCKERHUB_CREDENTIALS=credentials('chaoscarnival22')
@@ -102,28 +103,31 @@ pipeline {
                 }  
             }
         }
-        stage('inject chaos') {
+        stage('Updating the app with new image and inject chaos') {
             steps {
                 container('chaos-builder') {
                     sh '''
-                    echo "update the app with new image"
-
+                    echo "update the app with new image"  
                     kubectl -napp  set image  deployment/${DOCKER_IMAGE_PREFIX} ${DOCKER_IMAGE_PREFIX}=${APP_DOCKER_IMAGE_DEV}
                     kubectl wait --for=condition=available --timeout=600s deployment/${DOCKER_IMAGE_PREFIX} -n app
                     
                     echo "unleash the chaos => CPU hogging"
-                    kubectl apply -f  workflows/
-                    ./scripts/cleanup.sh
+                    ./scripts/chaos.sh
                     '''
                     
                 }
                 script {
                     chaosResults  = readFile('report.txt').trim()
+                    chaosResult=sh returnStdout: true, script: 'grep -q "Fail" report.txt; test $? -eq 0 && printf "Fail" || echo "Succeeded"'
+
                 }
                 
             }
         }
         stage('Promote image') {
+            when {
+                expression { chaosResult == 'Pass' }
+            }
             steps {
                 container('chaos-builder') {
                     sh '''
@@ -148,11 +152,6 @@ pipeline {
                         color: colors[currentBuild.result],
                         text: "${currentBuild.result}",
                         fields: [
-                            [
-                                title: "Tag",
-                                value: "${APP_DOCKER_IMAGE_DEV}",
-                                short: true
-                            ],
                             [
                                 title: "Trigger",
                                 value: "${triggerDesc}",
