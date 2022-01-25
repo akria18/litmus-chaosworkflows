@@ -107,7 +107,7 @@ pipeline {
                 container('chaos-builder') {
                     sh '''
                     echo "update the app with new image"
-                    
+
                     kubectl -napp  set image  deployment/${DOCKER_IMAGE_PREFIX} ${DOCKER_IMAGE_PREFIX}=${APP_DOCKER_IMAGE_DEV}
                     kubectl wait --for=condition=available --timeout=600s deployment/${DOCKER_IMAGE_PREFIX} -n app
                     
@@ -150,7 +150,7 @@ pipeline {
                         fields: [
                             [
                                 title: "Tag",
-                                value: "ChaosEngineering",
+                                value: "${APP_DOCKER_IMAGE_DEV}",
                                 short: true
                             ],
                             [
