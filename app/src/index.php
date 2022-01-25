@@ -1,6 +1,6 @@
-<?php
+<center><?php
 
-echo "Hello, from ChaosCarnival 2022! <br>";
-echo "Dont forget to put a good bg";
-echo '<img src="https://github.com/litmuschaos/litmus/blob/master/images/litmus-logo-dark-bg-sidebyside.png">';
-?>
+echo '<span style="font-size: medium; font-weight: normal;"> Hello, from ChaosCarnival 2022! </span> <br>';
+echo '<img src="https://www.chaosnative.com/_next/image?url=%2Fhome%2Fclc.png&w=1920&q=75">';
+
+?></center>
