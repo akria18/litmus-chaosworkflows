@@ -118,7 +118,7 @@ pipeline {
                 }
                 script {
                     chaosResults  = readFile('report.txt').trim()
-                    chaosResult=sh returnStdout: true, script: 'grep -q "Fail" report.txt; test $? -eq 0 && printf "Fail" || echo "Succeeded"'
+                    chaosResult=sh returnStdout: true, script: 'grep -q "Fail" report.txt; test $? -eq 0 && printf "Fail" || echo "Pass"'
 
                 }
                 
