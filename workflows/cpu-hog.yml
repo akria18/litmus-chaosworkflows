@@ -5,9 +5,7 @@ metadata:
   namespace: litmus
   creationTimestamp: null
   labels:
-    cluster_id: 565a14bc-06ec-4afa-a145-9dd7975a1ab7
     subject: custom-chaos-workflow_litmus
-    workflow_id: 7e2aada7-c335-4e92-a6f6-25cc9e780559
     workflows.argoproj.io/controller-instanceid: 565a14bc-06ec-4afa-a145-9dd7975a1ab7
 spec:
   templates:
@@ -259,4 +257,9 @@ spec:
       - name: adminModeNamespace
         value: litmus
   serviceAccountName: argo-chaos
+  podGC:
+    strategy: OnWorkflowCompletion
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
 
