@@ -118,20 +118,10 @@ pipeline {
                 }
                 script {
                     chaosResults  = readFile('report.txt').trim()
-                    chaosResult=sh returnStdout: true, script: 'grep -q "Fail" report.txt; test $? -eq 0 && printf "Fail" || printf "Pass"'
+                    chaosResult=sh returnStdout: true, script: 'grep -q "Pass" report.txt; test $? -eq 0 && printf "Pass" || printf "Fail"'
 
                 }
                 
-            }
-        }
-        stage('Clean Up') {
-            steps {
-                container('chaos-builder') {
-                    sh '''
-                    ./scripts/cleanup.sh
-                    '''
-                    
-                }  
             }
         }
         stage('Promote image') {
@@ -144,6 +134,20 @@ pipeline {
                     echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
                     docker tag ${APP_DOCKER_IMAGE_DEV} ${APP_DOCKER_IMAGE_PROD} 
                     docker push ${APP_DOCKER_IMAGE_PROD} 
+                    '''
+                    
+                }  
+            }
+
+        }
+        stage('Clean Up') {
+            when {
+                expression { chaosResult == 'Pass' }
+            }
+            steps {
+                container('chaos-builder') {
+                    sh '''
+                    ./scripts/cleanup.sh
                     '''
                     
                 }  
