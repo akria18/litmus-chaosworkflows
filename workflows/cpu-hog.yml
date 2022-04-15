@@ -218,7 +218,7 @@ spec:
                         components:
                           env:
                             - name: TOTAL_CHAOS_DURATION
-                              value: "60"
+                              value: "120"
                             - name: CPU_CORES
                               value: "1"
                             - name: PODS_AFFECTED_PERC
