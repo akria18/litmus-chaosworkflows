@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sleep 120;
+sleep 200;
 
 kubectl apply -f workflows/cpu-hog.yml
 until kubectl get workflow  --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1:].metadata.labels.\workflows\.argoproj\.io\/phase}' -nlitmus | grep -m 1 "Succeeded\|Failed";
