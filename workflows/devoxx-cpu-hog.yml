@@ -1,7 +1,7 @@
 kind: Workflow
 apiVersion: argoproj.io/v1alpha1
 metadata:
-  name: devoxx-cpu-hog-1650111036
+  name: devoxx-cpu-hog
   namespace: litmus
   creationTimestamp: null
   labels:
@@ -212,7 +212,7 @@ spec:
                   labels:
                     instance_id: 06397497-05a8-46cf-b00a-11a7f807517e
                     context: pod-cpu-hog_litmus
-                    workflow_name: devoxx-cpu-hog-1650111036
+                    workflow_name: devoxx-cpu-hog
                 spec:
                   engineState: active
                   appinfo:
